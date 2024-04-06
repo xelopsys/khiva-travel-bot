@@ -11,15 +11,18 @@ import { InlineKeyboardButton } from 'grammy/types';
 const token = process.env.BOT_TOKEN;
 bot.command('start', async (ctx: TypeBot) => {
   ctx.session.__language_code = 'en';
-  await ctx.reply(ctx.t('greeting'), {
-    reply_markup: {
-      ...(admins.includes(ctx.update.message?.from?.id as number)
-        ? adminMenu
-        : menu),
-      one_time_keyboard: true,
-      resize_keyboard: true,
-    },
-  });
+  await ctx.reply(
+    'Hello, i am khiva travel bot to help to manage the website!',
+    {
+      reply_markup: {
+        ...(admins.includes(ctx.update.message?.from?.id as number)
+          ? adminMenu
+          : menu),
+        one_time_keyboard: true,
+        resize_keyboard: true,
+      },
+    }
+  );
 });
 
 bot.hears('Banner', async (ctx: TypeBot) => {

@@ -21,7 +21,7 @@ const token = process.env.BOT_TOKEN;
 bot_1.default.command('start', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     ctx.session.__language_code = 'en';
-    yield ctx.reply(ctx.t('greeting'), {
+    yield ctx.reply('Hello, i am khiva travel bot to help to manage the website!', {
         reply_markup: Object.assign(Object.assign({}, (constants_1.admins.includes((_b = (_a = ctx.update.message) === null || _a === void 0 ? void 0 : _a.from) === null || _b === void 0 ? void 0 : _b.id)
             ? menu_1.adminMenu
             : menu_1.menu)), { one_time_keyboard: true, resize_keyboard: true }),

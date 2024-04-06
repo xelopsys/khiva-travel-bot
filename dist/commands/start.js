@@ -84,9 +84,9 @@ bot_1.default.hears('Travel', (ctx) => __awaiter(void 0, void 0, void 0, functio
         },
     };
     if (travelNames.length === 0)
-        return yield ctx.reply('No travels found in database', {
+        return yield ctx.reply('No travels found in database, create new one', {
             reply_markup: {
-                keyboard: [[{ text: 'Add Travel' }]],
+                inline_keyboard: [[createTravel]],
                 remove_keyboard: true,
                 one_time_keyboard: true,
             },

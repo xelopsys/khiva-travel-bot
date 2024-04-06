@@ -89,9 +89,9 @@ bot.hears('Travel', async (ctx: TypeBot) => {
   };
 
   if (travelNames.length === 0)
-    return await ctx.reply('No travels found in database', {
+    return await ctx.reply('No travels found in database, create new one', {
       reply_markup: {
-        keyboard: [[{ text: 'Add Travel' }]],
+        inline_keyboard: [[createTravel]],
         remove_keyboard: true,
         one_time_keyboard: true,
       },

@@ -15,16 +15,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const bot_1 = __importDefault(require("../bot/bot"));
 const menu_1 = require("../utils/menu");
 const constants_1 = require("../constants/constants");
-const axios_1 = __importDefault(require("axios"));
 const prisma_1 = __importDefault(require("../lib/prisma"));
-const token = process.env.BOT_TOKEN;
+const functions_1 = require("../helpers/functions");
+const actionKeyboards = [
+    { text: 'Delete' },
+    { text: 'Cancel' },
+];
 bot_1.default.command('start', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     ctx.session.__language_code = 'en';
     yield ctx.reply('Hello, i am khiva travel bot to help to manage the website!', {
-        reply_markup: Object.assign(Object.assign({}, (constants_1.admins.includes((_b = (_a = ctx.update.message) === null || _a === void 0 ? void 0 : _a.from) === null || _b === void 0 ? void 0 : _b.id)
-            ? menu_1.adminMenu
-            : menu_1.menu)), { one_time_keyboard: true, resize_keyboard: true }),
+        reply_markup: Object.assign(Object.assign({}, menu_1.menu), { one_time_keyboard: true, resize_keyboard: true }),
     });
 }));
 bot_1.default.hears('Banner', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
@@ -40,8 +40,8 @@ bot_1.default.hears('Banner', (ctx) => __awaiter(void 0, void 0, void 0, functio
     });
 }));
 bot_1.default.hears(['Home Banner', 'Travel Banner'], (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
-    if (((_c = ctx.update.message) === null || _c === void 0 ? void 0 : _c.text) === 'Travel Banner') {
+    var _a;
+    if (((_a = ctx.update.message) === null || _a === void 0 ? void 0 : _a.text) === 'Travel Banner') {
         ctx.session.step = constants_1.keyboards.travelBanner;
     }
     else {
@@ -53,8 +53,8 @@ bot_1.default.hears('Gallery', (ctx) => __awaiter(void 0, void 0, void 0, functi
     ctx.session.step = constants_1.keyboards.gallery;
     return yield ctx.reply('send me a photo', {
         reply_markup: {
-            keyboard: [[{ text: 'Cancel' }]],
-            remove_keyboard: true,
+            keyboard: [actionKeyboards],
+            resize_keyboard: true,
             one_time_keyboard: true,
         },
     });
@@ -65,11 +65,70 @@ bot_1.default.hears('Cancel', (ctx) => __awaiter(void 0, void 0, void 0, functio
         reply_markup: Object.assign(Object.assign({}, menu_1.menu), { one_time_keyboard: true, resize_keyboard: true }),
     });
 }));
+bot_1.default.callbackQuery('cancel', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    ctx.session.step = constants_1.keyboards.cancel;
+    return yield ctx.reply('Canceled', {
+        reply_markup: Object.assign(Object.assign({}, menu_1.menu), { one_time_keyboard: true, resize_keyboard: true }),
+    });
+}));
+bot_1.default.hears('Contacts', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    ctx.session.step = constants_1.keyboards.contact;
+    const contact = yield prisma_1.default.contact.findFirst();
+    const params = `?telegram=${(_b = ctx.from) === null || _b === void 0 ? void 0 : _b.id}`;
+    if (!contact) {
+        return yield ctx.reply('No contact found in database', {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: 'Create Contact',
+                            web_app: {
+                                url: process.env.WEB_APP_URL + '/contact/create',
+                            },
+                        },
+                    ],
+                ],
+                remove_keyboard: true,
+                one_time_keyboard: true,
+                resize_keyboard: true,
+            },
+        });
+    }
+    return yield ctx.reply(`Here is the contact information:
+     - Telegram: ${contact.telegram}
+     - WhatsApp: ${contact.whatsapp}
+     - Map: ${contact.map}`, {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Edit Contact',
+                        web_app: {
+                            url: process.env.WEB_APP_URL + '/contact/edit' + params,
+                        },
+                    },
+                ],
+                [
+                    {
+                        text: 'Cancel',
+                        callback_data: 'cancel',
+                    },
+                ],
+            ],
+            remove_keyboard: true,
+            one_time_keyboard: true,
+            resize_keyboard: true,
+        },
+    });
+}));
 bot_1.default.hears('Travel', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
     ctx.session.step = constants_1.keyboards.travel;
     const travels = yield prisma_1.default.travel.findMany();
+    const params = `?telegram=${(_c = ctx.from) === null || _c === void 0 ? void 0 : _c.id}`;
     const travelNames = travels.map((travel) => {
-        const url = process.env.WEB_APP_URL + '/travels/' + travel.uuid + '/edit';
+        const url = process.env.WEB_APP_URL + '/travels/' + travel.uuid + '/edit' + params;
         return {
             text: travel.name,
             web_app: {
@@ -80,7 +139,7 @@ bot_1.default.hears('Travel', (ctx) => __awaiter(void 0, void 0, void 0, functio
     const createTravel = {
         text: 'Create Travel',
         web_app: {
-            url: process.env.WEB_APP_URL + '/travels/create',
+            url: process.env.WEB_APP_URL + '/travels/create' + params,
         },
     };
     if (travelNames.length === 0)
@@ -95,364 +154,243 @@ bot_1.default.hears('Travel', (ctx) => __awaiter(void 0, void 0, void 0, functio
         reply_markup: {
             resize_keyboard: true,
             one_time_keyboard: true,
-            inline_keyboard: [travelNames, [createTravel]],
+            remove_keyboard: true,
+            inline_keyboard: [
+                travelNames,
+                [createTravel, { text: 'Delete', callback_data: 'delete' }],
+            ],
         },
     });
 }));
-bot_1.default.hears('Add Travel', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    // await prisma.car.create({
-    //   data: {
-    //     models: ['Yutong / Foton'],
-    //     carType: 'Bus',
-    //     included: 'Fuel, a professional driver, and potable water',
-    //     capacity: 45,
-    //     pictures: {
-    //       create: [
-    //         {
-    //           fileId:
-    //             'AgACAgIAAxkBAAPdZglzwr4QT-LfDlfW3CBpULTXYAkAAhLZMRtIVwFI62j_XWBFRlsBAAMCAAN5AAM0BA',
-    //           fileBase64: '',
-    //         },
-    //       ],
-    //     },
-    //     prices: {
-    //       create: [
-    //         {
-    //           price: 120,
-    //           distance: '1-49',
-    //         },
-    //         {
-    //           price: 180,
-    //           distance: '50-99',
-    //         },
-    //         {
-    //           price: 250,
-    //           distance: '100-199',
-    //         },
-    //         {
-    //           price: 290,
-    //           distance: '200-299',
-    //         },
-    //         {
-    //           price: 360,
-    //           distance: '300-399',
-    //         },
-    //       ],
-    //     },
-    //   },
-    // });
+bot_1.default.hears('Cars', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d;
+    ctx.session.step = constants_1.keyboards.car;
     const cars = yield prisma_1.default.car.findMany();
-    // const createdTravel = await prisma.travel.create({
-    //   data: {
-    //     name: 'Daytrip to Kalajik Kala & Salty Lake',
-    //     route:
-    //       'Khiva - Chodra Hovli - Poetry Center - Kalajik KAla and Salty Lake - Khiva',
-    //     description:
-    //       "Kalajik Kala is an ancient fortress in Uzbekistan's Kyzylkum Desert, known for its well-preserved walls and structures dating back to the 4th century BCE. Salty Lake, also called Lake Aydar, near Ayaz Kala, is famous for its turquoise color due to high salinity, offering a unique and picturesque destination for tourists.",
-    //     duration: 6,
-    //     sightseeingTime: 3,
-    //     drivingTime: 3,
-    //     drivingDistance: 160,
-    //     travelType: 'PRIVATE',
-    //     included:
-    //       'Brochures, drivers for new cars with air conditioning, and pick-up and drop-off services at your location, along with complimentary 0.5-liter bottles of mineral water per person.',
-    //     notIncluded:
-    //       'Admission tickets, meals, camel excursions, lodging in a Yurt Camp, and additional activities are not included.',
-    //     reservation: `Reserving our private or shared day trips, transfers, Aral Sea adventures, or guided city tours is easy and completely free. To book, simply confirm your reservation and provide the following details:
-    //       - Name of the trip or service you're interested in.
-    //       - Desired date for the trip or service.
-    //       - Type of transport and price confirmation.
-    //       - Number of travelers in your group and any luggage details.
-    //       - Full names, citizenship, and passport/ID card numbers of all travelers.
-    //       - Pick-up and start times for trips or transfers (contact us for recommendations).
-    //       - Pick-up location (hotel name, airport, or railway station).
-    //       - Drop-off location (hotel name, airport, or railway station).
-    //       - Your contact information: email, mobile phone, or WhatsApp numbers.
-    //     This information helps us check availability and organize your booking. To cancel a reservation without being charged (20% of the tour), please contact us at least 3 days before the tour starts.`,
-    //     travelImage: {
-    //       create: {
-    //         fileId:
-    //           'AgACAgIAAxkBAAPdZglzwr4QT-LfDlfW3CBpULTXYAkAAhLZMRtIVwFI62j_XWBFRlsBAAMCAAN5AAM0BA',
-    //         fileBase64: '',
-    //       },
-    //     },
-    //     pricesPerCar: {
-    //       create: [
-    //         {
-    //           carId: cars[0].uuid,
-    //           price: 29,
-    //           distance: '160',
-    //         },
-    //         {
-    //           carId: cars[1].uuid,
-    //           price: 49,
-    //           distance: '160',
-    //         },
-    //         {
-    //           carId: cars[2].uuid,
-    //           price: 59,
-    //           distance: '160',
-    //         },
-    //         {
-    //           carId: cars[3].uuid,
-    //           price: 69,
-    //           distance: '160',
-    //         },
-    //         {
-    //           carId: cars[4].uuid,
-    //           price: 79,
-    //           distance: '160',
-    //         },
-    //         {
-    //           carId: cars[5].uuid,
-    //           price: 189,
-    //           distance: '160',
-    //         },
-    //       ],
-    //     },
-    //     itinerary: {
-    //       create: [
-    //         {
-    //           route:
-    //             'Khiva Train Station or Hotel in Khiva - Chodra Hauli - Yangiariq Poetry Center - Kalajik Lake - Khiva Train Station or Hotel in Khiva',
-    //           description:
-    //             "We start your tour by picking you up from Khiva Train Station or your hotel in Khiva. The first stop is Chodra Hauli, Khan’s Summer Residence, a unique four-story building built in 1871 by Muhammad Rakhim Khan. Next, we visit the Yangiariq Poetry Center to observe the traditional process of making ceramic products. You can also purchase souvenirs here. The highlight of the trip is a visit to the Salty Lake, also known as Kalajik Lake, located near the Kalajik Kala fortress. The lake's water is similar to that of the Dead Sea and is believed to have therapeutic properties. After enjoying the lake, we drive you back to Khiva, where you will be dropped off at your hotel or the train station.",
-    //           duration: 4,
-    //         },
-    //       ],
-    //     },
-    //   },
-    // });
-    // const createdTravel = await prisma.travel.create({
-    //   data: {
-    //     name: 'Daytrip to Ayaz Kala',
-    //     route: 'Khiva - Urgench - Ayaz Kala - Urgench - Khiva',
-    //     description:
-    //       'Ayaz Kala is an ancient fortress located in the Kyzylkum Desert of Uzbekistan. Built during the 4th-2nd centuries BCE, it features tall clay walls and is divided into two parts, Ayaz Kala I and Ayaz Kala II. The site offers stunning desert views and is a popular spot for photography.',
-    //     duration: 6,
-    //     sightseeingTime: 2,
-    //     drivingTime: 4,
-    //     drivingDistance: 205,
-    //     travelType: 'PRIVATE',
-    //     included:
-    //       'Brochures, drivers for new cars with air conditioning, and pick-up and drop-off services at your location, along with complimentary 0.5-liter bottles of mineral water per person.',
-    //     notIncluded:
-    //       'Admission tickets, meals, camel excursions, lodging in a Yurt Camp, and additional activities are not included.',
-    //     reservation: `Reserving our private or shared day trips, transfers, Aral Sea adventures, or guided city tours is easy and completely free. To book, simply confirm your reservation and provide the following details:
-    //       - Name of the trip or service you're interested in.
-    //       - Desired date for the trip or service.
-    //       - Type of transport and price confirmation.
-    //       - Number of travelers in your group and any luggage details.
-    //       - Full names, citizenship, and passport/ID card numbers of all travelers.
-    //       - Pick-up and start times for trips or transfers (contact us for recommendations).
-    //       - Pick-up location (hotel name, airport, or railway station).
-    //       - Drop-off location (hotel name, airport, or railway station).
-    //       - Your contact information: email, mobile phone, or WhatsApp numbers.
-    //     This information helps us check availability and organize your booking. To cancel a reservation without being charged (20% of the tour), please contact us at least 3 days before the tour starts.`,
-    //     travelImage: {
-    //       create: {
-    //         fileId:
-    //           'AgACAgIAAxkBAAPdZglzwr4QT-LfDlfW3CBpULTXYAkAAhLZMRtIVwFI62j_XWBFRlsBAAMCAAN5AAM0BA',
-    //         fileBase64: '',
-    //       },
-    //     },
-    //     pricesPerCar: {
-    //       create: [
-    //         {
-    //           carId: cars[0].uuid,
-    //           price: 34,
-    //           distance: '205',
-    //         },
-    //         {
-    //           carId: cars[1].uuid,
-    //           price: 54,
-    //           distance: '205',
-    //         },
-    //         {
-    //           carId: cars[2].uuid,
-    //           price: 74,
-    //           distance: '205',
-    //         },
-    //         {
-    //           carId: cars[3].uuid,
-    //           price: 84,
-    //           distance: '205',
-    //         },
-    //         {
-    //           carId: cars[4].uuid,
-    //           price: 89,
-    //           distance: '205',
-    //         },
-    //         {
-    //           carId: cars[5].uuid,
-    //           price: 219,
-    //           distance: '205',
-    //         },
-    //       ],
-    //     },
-    //     itinerary: {
-    //       create: [
-    //         {
-    //           route: 'Ayaz Kala',
-    //           description:
-    //             'We begin your tour by picking you up from Urgench Airport, Urgench or Khiva Train Station, or from your hotel in Khiva or Urgench. The journey to Ayaz Kala takes about 90 minutes, where you will explore one of the most spectacular and largest fortresses in the area. Ayaz Kala consists of three fortresses clustered together on and around a prominent hill at the eastern end of the Sultan-Uiz-dahg range. The earliest fortress, Ayaz Kala 1, dates back to the 4th century BCE and features a galleried enclosure and rounded towers added in the 3rd century BCE. After visiting Ayaz Kala, we will drive you back to Khiva or Urgench, which takes about 90 minutes, and drop you off at your desired location without any extra charge.',
-    //           duration: 2,
-    //         },
-    //       ],
-    //     },
-    //   },
-    // });
-    // const createCar = await prisma.car.create({
-    //   data: {
-    //     model: 'Minibus',
-    //     capacity: 3,
-    //     price: 35,
-    //     included: 'Food',
-    //     notIncluded: 'Personal expenses',
-    //     image: {
-    //       create: {
-    //         fileId: '123',
-    //         fileBase64: 'abc123',
-    //       },
-    //     },
-    //   },
-    // });
-    // await prisma.transferInfo.create({
-    //   data: {
-    //     transfer:
-    //       'Khiva hotel → Khiva Train Station or Khiva Train Station → Khiva hotel',
-    //     drivingDistance: '5-10',
-    //     drivingTime: 20,
-    //     time: 'min',
-    //     transferOptions: {
-    //       create: [
-    //         {
-    //           carId: cars[0].uuid,
-    //           price: 5,
-    //         },
-    //         {
-    //           carId: cars[1].uuid,
-    //           price: 10,
-    //         },
-    //         {
-    //           carId: cars[2].uuid,
-    //           price: 15,
-    //         },
-    //         {
-    //           carId: cars[3].uuid,
-    //           price: 20,
-    //         },
-    //         {
-    //           carId: cars[4].uuid,
-    //           price: 20,
-    //         },
-    //         {
-    //           carId: cars[5].uuid,
-    //           price: 39,
-    //         },
-    //       ],
-    //     },
-    //   },
-    // });
-    // await prisma.transferInfo.create({
-    //   data: {
-    //     transfer: 'Transfer from Khiva to Urgench Airport or Train Station',
-    //     drivingDistance: '34',
-    //     drivingTime: 50,
-    //     time: 'min',
-    //     transferOptions: {
-    //       create: [
-    //         {
-    //           carId: cars[0].uuid,
-    //           price: 13,
-    //         },
-    //         {
-    //           carId: cars[1].uuid,
-    //           price: 20,
-    //         },
-    //         {
-    //           carId: cars[2].uuid,
-    //           price: 30,
-    //         },
-    //         {
-    //           carId: cars[3].uuid,
-    //           price: 35,
-    //         },
-    //         {
-    //           carId: cars[4].uuid,
-    //           price: 40,
-    //         },
-    //         {
-    //           carId: cars[5].uuid,
-    //           price: 79,
-    //         },
-    //       ],
-    //     },
-    //   },
-    // });
-    // await prisma.transferInfo.create({
-    //   data: {
-    //     transfer:
-    //       'Pick up from Urgench Airport or Urgench Train Station to your hotel in Khiva',
-    //     drivingDistance: '34',
-    //     drivingTime: 50,
-    //     time: 'min',
-    //     transferOptions: {
-    //       create: [
-    //         {
-    //           carId: cars[0].uuid,
-    //           price: 15,
-    //         },
-    //         {
-    //           carId: cars[1].uuid,
-    //           price: 23,
-    //         },
-    //         {
-    //           carId: cars[2].uuid,
-    //           price: 30,
-    //         },
-    //         {
-    //           carId: cars[3].uuid,
-    //           price: 35,
-    //         },
-    //         {
-    //           carId: cars[4].uuid,
-    //           price: 40,
-    //         },
-    //         {
-    //           carId: cars[5].uuid,
-    //           price: 89,
-    //         },
-    //       ],
-    //     },
-    //   },
-    // });
-    // await prisma.contact.create({
-    //   data: {
-    //     map: 'https://maps.app.goo.gl/whph5QHvrpSqYYUP6',
-    //     telegram: 'https://t.me/Farruh8854',
-    //     whatsapp: 'https://wa.me/998990900012',
-    //   },
-    // });
-    return yield ctx.reply('Enter travel name');
+    const params = `?telegram=${(_d = ctx.from) === null || _d === void 0 ? void 0 : _d.id}`;
+    const carNames = cars.map((car) => {
+        const url = process.env.WEB_APP_URL + '/cars/' + car.uuid + '/edit' + params;
+        return {
+            text: car.carType,
+            web_app: {
+                url: url,
+            },
+        };
+    });
+    const createCar = {
+        text: 'Create a new car',
+        web_app: {
+            url: process.env.WEB_APP_URL + '/cars/create' + params,
+        },
+    };
+    if (carNames.length === 0)
+        return yield ctx.reply('No cars found in database, create new one', {
+            reply_markup: {
+                inline_keyboard: [[createCar]],
+                remove_keyboard: true,
+                one_time_keyboard: true,
+            },
+        });
+    return yield ctx.reply('Here is the list of cars, please choose one to edit or create new one or delete existing one', {
+        reply_markup: {
+            resize_keyboard: true,
+            remove_keyboard: true,
+            one_time_keyboard: true,
+            inline_keyboard: [
+                carNames,
+                [createCar, { text: 'Delete', callback_data: 'delete' }],
+            ],
+        },
+    });
+}));
+bot_1.default.hears('Transfers', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e;
+    ctx.session.step = constants_1.keyboards.transfer;
+    const transfers = yield prisma_1.default.transferInfo.findMany();
+    const params = `?telegram=${(_e = ctx.from) === null || _e === void 0 ? void 0 : _e.id}`;
+    const transferNames = transfers.map((transfer) => {
+        const url = process.env.WEB_APP_URL +
+            '/transfers/' +
+            transfer.uuid +
+            '/edit' +
+            params;
+        return {
+            text: transfer.transfer,
+            web_app: {
+                url: url,
+            },
+        };
+    });
+    const createTransfer = {
+        text: 'Create a new transfer',
+        web_app: {
+            url: process.env.WEB_APP_URL + '/transfers/create' + params,
+        },
+    };
+    if (transferNames.length === 0)
+        return yield ctx.reply('No transfer found in database, create new one', {
+            reply_markup: {
+                inline_keyboard: [[createTransfer]],
+                remove_keyboard: true,
+                one_time_keyboard: true,
+            },
+        });
+    return yield ctx.reply('Here is the list of transfers, please choose one to edit or create new one or delete existing one', {
+        reply_markup: {
+            resize_keyboard: true,
+            remove_keyboard: true,
+            one_time_keyboard: true,
+            inline_keyboard: [
+                transferNames,
+                [createTransfer, { text: 'Delete', callback_data: 'delete' }],
+            ],
+        },
+    });
+}));
+bot_1.default.callbackQuery('delete', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    if (ctx.session.step === constants_1.keyboards.travel) {
+        const travels = yield prisma_1.default.travel.findMany();
+        const travelNames = travels.map((travel) => {
+            return {
+                text: travel.name,
+            };
+        });
+        return yield ctx.reply('Choose a travel to delete', {
+            reply_markup: {
+                keyboard: [travelNames, [{ text: 'Cancel' }]],
+                one_time_keyboard: true,
+                resize_keyboard: true,
+            },
+        });
+    }
+    if (ctx.session.step === constants_1.keyboards.car) {
+        const cars = yield prisma_1.default.car.findMany();
+        const carNames = cars.map((car) => {
+            return {
+                text: car.carType,
+            };
+        });
+        return yield ctx.reply('Choose a car to delete', {
+            reply_markup: {
+                keyboard: [carNames, [{ text: 'Cancel' }]],
+                one_time_keyboard: true,
+                resize_keyboard: true,
+            },
+        });
+    }
+    if (ctx.session.step === constants_1.keyboards.transfer) {
+        const transfers = yield prisma_1.default.transferInfo.findMany();
+        const transferNames = transfers.map((transfer) => {
+            return {
+                text: transfer.transfer,
+            };
+        });
+        return yield ctx.reply('Choose a transfer to delete', {
+            reply_markup: {
+                keyboard: [transferNames, [{ text: 'Cancel' }]],
+                one_time_keyboard: true,
+                resize_keyboard: true,
+            },
+        });
+    }
+}));
+bot_1.default.hears('Delete', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    if (ctx.session.step === constants_1.keyboards.gallery) {
+        const gallery = yield prisma_1.default.gallery.findMany();
+        if (gallery.length === 0) {
+            return yield ctx.reply('No images found in gallery', {
+                reply_markup: Object.assign(Object.assign({}, menu_1.menu), { one_time_keyboard: true, resize_keyboard: true }),
+            });
+        }
+        yield ctx.reply('Choose an image to delete', {
+            reply_markup: {
+                keyboard: [
+                    gallery.map((item) => ({ text: `${item.index}` })),
+                    [{ text: 'Cancel' }],
+                ],
+                one_time_keyboard: true,
+                resize_keyboard: true,
+            },
+        });
+        return gallery.map((image, index) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.replyWithPhoto(image.fileId, {
+                caption: `${image.index}`,
+            });
+        }));
+    }
 }));
 bot_1.default.on('message:photo', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e, _f, _g;
-    const fileId = (_e = (_d = ctx.message) === null || _d === void 0 ? void 0 : _d.photo) === null || _e === void 0 ? void 0 : _e[((_g = (_f = ctx.message) === null || _f === void 0 ? void 0 : _f.photo) === null || _g === void 0 ? void 0 : _g.length) - 1].file_id;
-    yield ctx.reply('Image is being saved...');
+    var _f, _g, _h, _j;
+    const fileId = (_g = (_f = ctx.message) === null || _f === void 0 ? void 0 : _f.photo) === null || _g === void 0 ? void 0 : _g[((_j = (_h = ctx.message) === null || _h === void 0 ? void 0 : _h.photo) === null || _j === void 0 ? void 0 : _j.length) - 1].file_id;
     if (ctx.session.step === constants_1.keyboards.banner ||
         ctx.session.step === constants_1.keyboards.travelBanner ||
         ctx.session.step === constants_1.keyboards.gallery) {
-        return yield handleBannerInsertImage({
+        yield ctx.reply('Image is being saved...', {
+            reply_markup: {
+                keyboard: [[{ text: 'Cancel' }]],
+                resize_keyboard: true,
+                one_time_keyboard: true,
+            },
+        });
+        return yield (0, functions_1.handleBannerInsertImage)({
             fileId,
             banner: ctx.session.step,
         }).then(() => __awaiter(void 0, void 0, void 0, function* () {
             yield ctx.reply('Image has been saved');
             if (ctx.session.step === constants_1.keyboards.gallery) {
                 yield ctx.replyWithPhoto(fileId);
-                return yield ctx.reply('send another one');
+                return yield ctx.reply('send another one', {
+                    reply_markup: {
+                        keyboard: [[{ text: 'Cancel' }]],
+                        resize_keyboard: true,
+                        one_time_keyboard: true,
+                    },
+                });
             }
             return yield ctx.replyWithPhoto(fileId);
+        }));
+    }
+}));
+bot_1.default.on('message:text', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _k, _l;
+    if (ctx.session.step === constants_1.keyboards.gallery &&
+        ((_l = (_k = ctx.message) === null || _k === void 0 ? void 0 : _k.text) === null || _l === void 0 ? void 0 : _l.match(/[\d{1}$]/))) {
+        const index = parseInt(ctx.message.text) - 1;
+        if (index < 0) {
+            return yield ctx.reply('There is no image with this index');
+        }
+        const gallery = yield prisma_1.default.gallery.findFirst({
+            where: {
+                index: parseInt(ctx.message.text),
+            },
+        });
+        return yield prisma_1.default.gallery
+            .delete({
+            where: {
+                uuid: gallery === null || gallery === void 0 ? void 0 : gallery.uuid,
+            },
+        })
+            .then(() => __awaiter(void 0, void 0, void 0, function* () {
+            const gallery = yield prisma_1.default.gallery.findMany();
+            yield ctx.reply('Image has been deleted');
+            return yield ctx.reply("Choose another image or 'Cancel'", {
+                reply_markup: {
+                    keyboard: [
+                        gallery.map((item) => ({ text: `${item.index}` })),
+                        [{ text: 'Cancel' }],
+                    ],
+                    one_time_keyboard: true,
+                    resize_keyboard: true,
+                },
+            });
+        }))
+            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.reply('Error while deleting image, please try again later', {
+                reply_markup: {
+                    keyboard: [[{ text: 'Cancel' }]],
+                    one_time_keyboard: true,
+                    resize_keyboard: true,
+                },
+            });
         }));
     }
 }));
@@ -511,52 +449,179 @@ bot_1.default.on('message:photo', (ctx) => __awaiter(void 0, void 0, void 0, fun
 //   const fileBuffer = await readFile(fileUrl);
 //   return fileBuffer;
 // }
-function getFileUrlFromTelegram(fileId) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const file = yield bot_1.default.api.getFile(fileId);
-        const filePath = file.file_path;
-        const fileUrl = `https://api.telegram.org/file/bot${token}/${filePath}`;
-        return fileUrl;
-    });
-}
-function downloadFileAsBase64(fileUrl) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const response = yield axios_1.default.get(fileUrl, { responseType: 'arraybuffer' });
-        const base64String = Buffer.from(response.data, 'binary').toString('base64');
-        const dataUri = `data:image/jpeg;base64,${base64String}`;
-        return dataUri;
-    });
-}
-const handleBannerInsertImage = ({ fileId, banner, }) => __awaiter(void 0, void 0, void 0, function* () {
-    const fileUrl = yield getFileUrlFromTelegram(fileId);
-    const base64String = yield downloadFileAsBase64(fileUrl);
-    console.log('banner', banner, fileId);
-    if (banner === constants_1.keyboards.banner) {
-        return yield prisma_1.default.banner.deleteMany().then(() => __awaiter(void 0, void 0, void 0, function* () {
-            yield prisma_1.default.banner.create({
-                data: {
-                    fileId,
-                    fileBase64: base64String,
-                },
-            });
-        }));
-    }
-    if (banner === constants_1.keyboards.travelBanner) {
-        return yield prisma_1.default.travelBanner.deleteMany().then(() => __awaiter(void 0, void 0, void 0, function* () {
-            yield prisma_1.default.travelBanner.create({
-                data: {
-                    fileId,
-                    fileBase64: base64String,
-                },
-            });
-        }));
-    }
-    if (banner === constants_1.keyboards.gallery) {
-        return yield prisma_1.default.gallery.create({
-            data: {
-                fileId,
-                fileBase64: base64String,
+bot_1.default.on('message:text', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _m, _o, _p;
+    if (ctx.session.step === constants_1.keyboards.travel) {
+        const travel = yield prisma_1.default.travel.findFirst({
+            where: {
+                name: ((_m = ctx.message) === null || _m === void 0 ? void 0 : _m.text) || '',
             },
         });
+        if (!travel)
+            return yield ctx.reply('No travel found with this name');
+        yield prisma_1.default.travel
+            .update({
+            where: {
+                uuid: travel === null || travel === void 0 ? void 0 : travel.uuid,
+            },
+            data: {
+                itinerary: {
+                    deleteMany: {},
+                },
+                pricesPerCar: {
+                    deleteMany: {},
+                },
+            },
+        })
+            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.reply('Error while deleting car, please try again later');
+        }));
+        yield prisma_1.default.travel
+            .delete({
+            where: {
+                uuid: travel.uuid,
+            },
+        })
+            .then((res) => __awaiter(void 0, void 0, void 0, function* () {
+            const travels = yield prisma_1.default.travel.findMany();
+            const travelNames = travels.map((travel) => {
+                return {
+                    text: travel.name,
+                };
+            });
+            if (travelNames.length === 0)
+                return yield ctx.reply('All travels are deleted', {
+                    reply_markup: {
+                        keyboard: [travelNames, [{ text: 'Cancel' }]],
+                        one_time_keyboard: true,
+                        resize_keyboard: true,
+                    },
+                });
+            return yield ctx.reply(`Car '${res.name}' has been deleted`, {
+                reply_markup: {
+                    keyboard: [travelNames, [{ text: 'Cancel' }]],
+                    one_time_keyboard: true,
+                    resize_keyboard: true,
+                },
+            });
+        }))
+            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.reply('Error while deleting travel, please try again later');
+        }));
     }
-});
+    // delete a car
+    if (ctx.session.step === constants_1.keyboards.car) {
+        const car = yield prisma_1.default.car.findFirst({
+            where: {
+                carType: ((_o = ctx.message) === null || _o === void 0 ? void 0 : _o.text) || '',
+            },
+        });
+        if (!car)
+            return yield ctx.reply('No car found with this name');
+        yield prisma_1.default.car
+            .update({
+            where: {
+                uuid: car === null || car === void 0 ? void 0 : car.uuid,
+            },
+            data: {
+                pictures: {
+                    deleteMany: {},
+                },
+            },
+        })
+            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.reply('Error while deleting car, please try again later');
+        }));
+        yield prisma_1.default.car
+            .delete({
+            where: {
+                uuid: car.uuid,
+            },
+            include: {
+                pictures: true,
+            },
+        })
+            .then((res) => __awaiter(void 0, void 0, void 0, function* () {
+            const cars = yield prisma_1.default.car.findMany();
+            const carNames = cars.map((car) => {
+                return {
+                    text: car.carType,
+                };
+            });
+            if (carNames.length === 0)
+                return yield ctx.reply('All cars are deleted', {
+                    reply_markup: {
+                        keyboard: [carNames, [{ text: 'Cancel' }]],
+                        one_time_keyboard: true,
+                        resize_keyboard: true,
+                    },
+                });
+            return yield ctx.reply(`Car '${res.carType}' has been deleted`, {
+                reply_markup: {
+                    keyboard: [carNames, [{ text: 'Cancel' }]],
+                    one_time_keyboard: true,
+                    resize_keyboard: true,
+                },
+            });
+        }))
+            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.reply('Error while deleting car, please try again later');
+        }));
+    }
+    //delete a transfer
+    if (ctx.session.step === constants_1.keyboards.transfer) {
+        const transfer = yield prisma_1.default.transferInfo.findFirst({
+            where: {
+                transfer: ((_p = ctx.message) === null || _p === void 0 ? void 0 : _p.text) || '',
+            },
+        });
+        if (!transfer)
+            return yield ctx.reply('No transfer found with this name');
+        yield prisma_1.default.transferInfo
+            .update({
+            where: {
+                uuid: transfer === null || transfer === void 0 ? void 0 : transfer.uuid,
+            },
+            data: {
+                transferOptions: {
+                    deleteMany: {},
+                },
+            },
+        })
+            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.reply('Error while deleting transfer, please try again later');
+        }));
+        yield prisma_1.default.transferInfo
+            .delete({
+            where: {
+                uuid: transfer.uuid,
+            },
+        })
+            .then((res) => __awaiter(void 0, void 0, void 0, function* () {
+            const transfers = yield prisma_1.default.transferInfo.findMany();
+            const transferNames = transfers.map((transfer) => {
+                return {
+                    text: transfer.transfer,
+                };
+            });
+            if (transferNames.length === 0)
+                return yield ctx.reply('All transfers are deleted', {
+                    reply_markup: {
+                        keyboard: [transferNames, [{ text: 'Cancel' }]],
+                        one_time_keyboard: true,
+                        resize_keyboard: true,
+                    },
+                });
+            return yield ctx.reply(`Transfer '${res.transfer}' has been deleted`, {
+                reply_markup: {
+                    keyboard: [transferNames, [{ text: 'Cancel' }]],
+                    one_time_keyboard: true,
+                    resize_keyboard: true,
+                },
+            });
+        }))
+            .catch(() => __awaiter(void 0, void 0, void 0, function* () {
+            return yield ctx.reply('Error while deleting transfer, please try again later');
+        }));
+    }
+}));

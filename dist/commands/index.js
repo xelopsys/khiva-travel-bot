@@ -1,5 +1,3 @@
 "use strict";
-require("./start");
-require("./download");
+require('./start');
 // require("./messages");
-require("./jobs");

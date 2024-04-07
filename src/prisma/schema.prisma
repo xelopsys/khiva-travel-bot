@@ -96,6 +96,7 @@ model Gallery {
   fileId     String
   fileBase64 String
   createdAt  DateTime @default(now())
+  index      Int      @default(autoincrement())
   uuid       String   @id @default(uuid())
 }
 

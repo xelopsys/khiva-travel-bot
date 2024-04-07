@@ -9,6 +9,8 @@ const keyboards = {
     travelBanner: 'TRAVEL_BANNER',
     gallery: 'GALLERY',
     car: 'CAR',
+    transfer: 'TRANSFER',
     cancel: 'CANCEL',
+    contact: 'CONTACT',
 };
 exports.keyboards = keyboards;

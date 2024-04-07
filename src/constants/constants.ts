@@ -6,7 +6,9 @@ const keyboards = {
   travelBanner: 'TRAVEL_BANNER',
   gallery: 'GALLERY',
   car: 'CAR',
+  transfer: 'TRANSFER',
   cancel: 'CANCEL',
+  contact: 'CONTACT',
 } as const;
 
 export { admins, keyboards };

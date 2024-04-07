@@ -22,7 +22,6 @@ const actionKeyboards = [
     { text: 'Cancel' },
 ];
 bot_1.default.command('start', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    ctx.session.__language_code = 'en';
     yield ctx.reply('Hello, i am khiva travel bot to help to manage the website!', {
         reply_markup: Object.assign(Object.assign({}, menu_1.menu), { one_time_keyboard: true, resize_keyboard: true }),
     });

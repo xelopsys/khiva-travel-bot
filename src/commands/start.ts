@@ -14,7 +14,6 @@ const actionKeyboards: KeyboardButton[] = [
 ];
 
 bot.command('start', async (ctx: TypeBot) => {
-  ctx.session.__language_code = 'en';
   await ctx.reply(
     'Hello, i am khiva travel bot to help to manage the website!',
     {

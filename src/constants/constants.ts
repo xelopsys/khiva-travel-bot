@@ -1,6 +1,7 @@
 const admins = [465803074, 1440607729];
 
 const keyboards = {
+  start: 'START',
   banner: 'BANNER',
   travel: 'TRAVEL',
   travelBanner: 'TRAVEL_BANNER',

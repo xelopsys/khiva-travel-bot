@@ -45,7 +45,13 @@ bot.hears(['Home Banner', 'Travel Banner'], async (ctx: TypeBot) => {
   } else {
     ctx.session.step = keyboards.banner;
   }
-  return await ctx.reply('send me a banner');
+  return await ctx.reply('send me a banner', {
+    reply_markup: {
+      keyboard: [[{ text: 'Cancel' }]],
+      resize_keyboard: true,
+      one_time_keyboard: true,
+    },
+  });
 });
 
 bot.hears('Gallery', async (ctx: TypeBot) => {
@@ -159,7 +165,10 @@ bot.hears('Travel', async (ctx: TypeBot) => {
   if (travelNames.length === 0)
     return await ctx.reply('No travels found in database, create new one', {
       reply_markup: {
-        inline_keyboard: [[createTravel]],
+        inline_keyboard: [
+          [createTravel],
+          [{ text: 'Cancel', callback_data: 'cancel' }],
+        ],
         remove_keyboard: true,
         one_time_keyboard: true,
       },
@@ -174,6 +183,7 @@ bot.hears('Travel', async (ctx: TypeBot) => {
         inline_keyboard: [
           travelNames,
           [createTravel, { text: 'Delete', callback_data: 'delete' }],
+          [{ text: 'Cancel', callback_data: 'cancel' }],
         ],
       },
     }
@@ -204,9 +214,13 @@ bot.hears('Cars', async (ctx: TypeBot) => {
   if (carNames.length === 0)
     return await ctx.reply('No cars found in database, create new one', {
       reply_markup: {
-        inline_keyboard: [[createCar]],
+        inline_keyboard: [
+          [createCar],
+          [{ text: 'Cancel', callback_data: 'cancel' }],
+        ],
         remove_keyboard: true,
         one_time_keyboard: true,
+        resize_keyboard: true,
       },
     });
   return await ctx.reply(
@@ -214,11 +228,12 @@ bot.hears('Cars', async (ctx: TypeBot) => {
     {
       reply_markup: {
         resize_keyboard: true,
-        remove_keyboard: true,
         one_time_keyboard: true,
+        remove_keyboard: true,
         inline_keyboard: [
           carNames,
           [createCar, { text: 'Delete', callback_data: 'delete' }],
+          [{ text: 'Cancel', callback_data: 'cancel' }],
         ],
       },
     }
@@ -253,7 +268,10 @@ bot.hears('Transfers', async (ctx: TypeBot) => {
   if (transferNames.length === 0)
     return await ctx.reply('No transfer found in database, create new one', {
       reply_markup: {
-        inline_keyboard: [[createTransfer]],
+        inline_keyboard: [
+          [createTransfer],
+          [{ text: 'Cancel', callback_data: 'cancel' }],
+        ],
         remove_keyboard: true,
         one_time_keyboard: true,
       },
@@ -268,6 +286,7 @@ bot.hears('Transfers', async (ctx: TypeBot) => {
         inline_keyboard: [
           transferNames,
           [createTransfer, { text: 'Delete', callback_data: 'delete' }],
+          [{ text: 'Cancel', callback_data: 'cancel' }],
         ],
       },
     }

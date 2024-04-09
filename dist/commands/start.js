@@ -46,7 +46,13 @@ bot_1.default.hears(['Home Banner', 'Travel Banner'], (ctx) => __awaiter(void 0,
     else {
         ctx.session.step = constants_1.keyboards.banner;
     }
-    return yield ctx.reply('send me a banner');
+    return yield ctx.reply('send me a banner', {
+        reply_markup: {
+            keyboard: [[{ text: 'Cancel' }]],
+            resize_keyboard: true,
+            one_time_keyboard: true,
+        },
+    });
 }));
 bot_1.default.hears('Gallery', (ctx) => __awaiter(void 0, void 0, void 0, function* () {
     ctx.session.step = constants_1.keyboards.gallery;
@@ -144,7 +150,10 @@ bot_1.default.hears('Travel', (ctx) => __awaiter(void 0, void 0, void 0, functio
     if (travelNames.length === 0)
         return yield ctx.reply('No travels found in database, create new one', {
             reply_markup: {
-                inline_keyboard: [[createTravel]],
+                inline_keyboard: [
+                    [createTravel],
+                    [{ text: 'Cancel', callback_data: 'cancel' }],
+                ],
                 remove_keyboard: true,
                 one_time_keyboard: true,
             },
@@ -157,6 +166,7 @@ bot_1.default.hears('Travel', (ctx) => __awaiter(void 0, void 0, void 0, functio
             inline_keyboard: [
                 travelNames,
                 [createTravel, { text: 'Delete', callback_data: 'delete' }],
+                [{ text: 'Cancel', callback_data: 'cancel' }],
             ],
         },
     });
@@ -184,19 +194,24 @@ bot_1.default.hears('Cars', (ctx) => __awaiter(void 0, void 0, void 0, function*
     if (carNames.length === 0)
         return yield ctx.reply('No cars found in database, create new one', {
             reply_markup: {
-                inline_keyboard: [[createCar]],
+                inline_keyboard: [
+                    [createCar],
+                    [{ text: 'Cancel', callback_data: 'cancel' }],
+                ],
                 remove_keyboard: true,
                 one_time_keyboard: true,
+                resize_keyboard: true,
             },
         });
     return yield ctx.reply('Here is the list of cars, please choose one to edit or create new one or delete existing one', {
         reply_markup: {
             resize_keyboard: true,
-            remove_keyboard: true,
             one_time_keyboard: true,
+            remove_keyboard: true,
             inline_keyboard: [
                 carNames,
                 [createCar, { text: 'Delete', callback_data: 'delete' }],
+                [{ text: 'Cancel', callback_data: 'cancel' }],
             ],
         },
     });
@@ -228,7 +243,10 @@ bot_1.default.hears('Transfers', (ctx) => __awaiter(void 0, void 0, void 0, func
     if (transferNames.length === 0)
         return yield ctx.reply('No transfer found in database, create new one', {
             reply_markup: {
-                inline_keyboard: [[createTransfer]],
+                inline_keyboard: [
+                    [createTransfer],
+                    [{ text: 'Cancel', callback_data: 'cancel' }],
+                ],
                 remove_keyboard: true,
                 one_time_keyboard: true,
             },
@@ -241,6 +259,7 @@ bot_1.default.hears('Transfers', (ctx) => __awaiter(void 0, void 0, void 0, func
             inline_keyboard: [
                 transferNames,
                 [createTransfer, { text: 'Delete', callback_data: 'delete' }],
+                [{ text: 'Cancel', callback_data: 'cancel' }],
             ],
         },
     });

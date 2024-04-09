@@ -30,10 +30,12 @@ model Travel {
   travelType      travelType
   time            Time          @default(hour)
   createdAt       DateTime      @default(now())
-  travelImageId   String
+  travelImageId   String?
+  mapImageId      String?       @default(uuid())
   uuid            String        @id @default(uuid())
   pricesPerCar    PricingTier[]
-  travelImage     TravelImage   @relation(fields: [travelImageId], references: [uuid])
+  travelImage     TravelImage?  @relation(fields: [travelImageId], references: [uuid], name: "TravelImage")
+  mapImage        TravelImage?  @relation(fields: [mapImageId], references: [uuid], name: "TravelMapImage") // optional
   itinerary       Itinerary[]   @relation("ItineraryToTravel")
 }
 
@@ -70,8 +72,8 @@ model PricingTier {
 model Itinerary {
   route       String
   description String
-  duration    String
-  time        Time     @default(hour)
+  duration    String?
+  time        Time?    @default(hour)
   uuid        String   @id @default(uuid())
   travel      Travel[] @relation("ItineraryToTravel")
 }
@@ -81,7 +83,8 @@ model TravelImage {
   fileBase64 String
   createdAt  DateTime @default(now())
   uuid       String   @id @default(uuid())
-  travel     Travel[]
+  travel     Travel[] @relation("TravelImage")
+  map        Travel[] @relation("TravelMapImage")
 }
 
 model Contact {

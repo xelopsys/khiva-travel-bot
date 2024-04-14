@@ -1,2 +1,9 @@
 require('./start');
-// require("./messages");
+require('./car');
+require('./travel');
+require('./transfer');
+require('./banner');
+require('./actions/delete');
+require('./actions/cancel');
+require('./message/text');
+require('./message/photo');

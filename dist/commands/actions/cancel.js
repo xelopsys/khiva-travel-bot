@@ -12,12 +12,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const bot_1 = __importDefault(require("../bot/bot"));
-const constants_1 = require("../constants/constants");
-bot_1.default.command("addnewbook", (ctx) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    if (((_a = ctx.from) === null || _a === void 0 ? void 0 : _a.id) && constants_1.admins.includes((_b = ctx.from) === null || _b === void 0 ? void 0 : _b.id)) {
-        yield ctx.reply("Book name");
-    }
-    return ctx.reply("You are not admin");
+const bot_1 = __importDefault(require("../../bot/bot"));
+const menu_1 = require("../../utils/menu");
+const constants_1 = require("../../constants/constants");
+bot_1.default.hears(constants_1.commands.cancelButton, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    ctx.session.step = constants_1.keyboards.cancel;
+    return yield ctx.reply('Canceled', {
+        reply_markup: Object.assign(Object.assign({}, menu_1.menu), { one_time_keyboard: true, resize_keyboard: true }),
+    });
+}));
+bot_1.default.callbackQuery(constants_1.commands.cancelCall, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    ctx.session.step = constants_1.keyboards.cancel;
+    return yield ctx.reply('Canceled', {
+        reply_markup: Object.assign(Object.assign({}, menu_1.menu), { one_time_keyboard: true, resize_keyboard: true }),
+    });
 }));

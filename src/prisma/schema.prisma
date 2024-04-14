@@ -11,9 +11,11 @@ datasource db {
 
 model Banner {
   fileId     String
-  fileBase64 String
+  fileBase64 String?
   createdAt  DateTime @default(now())
   uuid       String   @id @default(uuid())
+  fileUrl    String?
+  fileName   String?
 }
 
 model Travel {
@@ -27,36 +29,37 @@ model Travel {
   included        String?       @default("")
   notIncluded     String?       @default("")
   reservation     String?       @default("")
-  travelType      travelType
-  time            Time          @default(hour)
   createdAt       DateTime      @default(now())
   travelImageId   String?
-  mapImageId      String?       @default(uuid())
   uuid            String        @id @default(uuid())
+  time            Time          @default(hour)
+  travelType      travelType
+  mapImageId      String?       @default(uuid())
   pricesPerCar    PricingTier[]
-  travelImage     TravelImage?  @relation(fields: [travelImageId], references: [uuid], name: "TravelImage")
-  mapImage        TravelImage?  @relation(fields: [mapImageId], references: [uuid], name: "TravelMapImage") // optional
+  mapImage        TravelImage?  @relation("TravelMapImage", fields: [mapImageId], references: [uuid])
+  travelImage     TravelImage?  @relation("TravelImage", fields: [travelImageId], references: [uuid])
   itinerary       Itinerary[]   @relation("ItineraryToTravel")
 }
 
 model Car {
-  models         String[]
-  included       String?
-  carType        String
-  uuid           String           @id @default(uuid())
   capacity       Int
+  included       String?
+  uuid           String           @id @default(uuid())
+  carType        String
+  models         String[]
   pictures       Picture[]
   prices         PricingTier[]
   transferOption TransferOption[]
 }
 
 model Picture {
-  fileId     String
-  fileBase64 String
-  createdAt  DateTime @default(now())
-  uuid       String   @id @default(uuid())
-  carId      String
-  car        Car      @relation(fields: [carId], references: [uuid])
+  fileId    String
+  fileName  String
+  createdAt DateTime @default(now())
+  uuid      String   @id @default(uuid())
+  carId     String
+  fileUrl   String?
+  car       Car      @relation(fields: [carId], references: [uuid])
 }
 
 model PricingTier {
@@ -73,18 +76,20 @@ model Itinerary {
   route       String
   description String
   duration    String?
-  time        Time?    @default(hour)
   uuid        String   @id @default(uuid())
+  time        Time?    @default(hour)
   travel      Travel[] @relation("ItineraryToTravel")
 }
 
 model TravelImage {
   fileId     String
-  fileBase64 String
+  fileBase64 String?
   createdAt  DateTime @default(now())
   uuid       String   @id @default(uuid())
-  travel     Travel[] @relation("TravelImage")
+  fileUrl    String?
+  fileName   String?
   map        Travel[] @relation("TravelMapImage")
+  travel     Travel[] @relation("TravelImage")
 }
 
 model Contact {
@@ -97,17 +102,21 @@ model Contact {
 
 model Gallery {
   fileId     String
-  fileBase64 String
+  fileBase64 String?
   createdAt  DateTime @default(now())
-  index      Int      @default(autoincrement())
   uuid       String   @id @default(uuid())
+  index      Int      @default(autoincrement())
+  fileUrl    String?
+  fileName   String?
 }
 
 model TravelBanner {
   fileId     String
-  fileBase64 String
+  fileBase64 String?
   createdAt  DateTime @default(now())
   uuid       String   @id @default(uuid())
+  fileUrl    String?
+  fileName   String?  @default("travelbanner.jpeg")
 }
 
 model TransferOption {

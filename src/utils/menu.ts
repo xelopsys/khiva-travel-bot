@@ -1,16 +1,17 @@
 import { Keyboard } from 'grammy';
+import { commands } from '../constants/constants';
 
 const menu = new Keyboard()
-  .text('Banner')
-  .text('Gallery')
+  .text(commands.banner)
+  .text(commands.gallery)
   .row()
-  .text('Travel')
+  .text(commands.travel)
   .row()
-  .text('Cars')
+  .text(commands.car)
   .row()
-  .text('Transfers')
+  .text(commands.transfer)
   .row()
-  .text('Contacts')
+  .text(commands.contact)
   .row();
 
 export { menu };

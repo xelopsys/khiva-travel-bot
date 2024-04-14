@@ -14,9 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleBannerInsertImage = exports.getFileUrlFromTelegram = void 0;
 const prisma_1 = __importDefault(require("../lib/prisma"));
-const axios_1 = __importDefault(require("axios"));
 const bot_1 = __importDefault(require("../bot/bot"));
 const constants_1 = require("../constants/constants");
+const axios_1 = __importDefault(require("axios"));
+const uuid_1 = require("uuid");
+const axiosinstance_1 = __importDefault(require("../utils/axiosinstance"));
 const token = process.env.BOT_TOKEN;
 function getFileUrlFromTelegram(fileId) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -27,34 +29,44 @@ function getFileUrlFromTelegram(fileId) {
     });
 }
 exports.getFileUrlFromTelegram = getFileUrlFromTelegram;
-function downloadFileAsBase64(fileUrl) {
+function downloadFileAsUrl(fileUrl) {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = yield axios_1.default.get(fileUrl, { responseType: 'arraybuffer' });
+        const uuid = (0, uuid_1.v4)();
+        const response = yield axios_1.default.get(fileUrl, {
+            responseType: 'arraybuffer',
+        });
         const base64String = Buffer.from(response.data, 'binary').toString('base64');
         const dataUri = `data:image/jpeg;base64,${base64String}`;
-        return dataUri;
+        const res = yield uploadFile(dataUri, uuid);
+        return res;
     });
 }
 const handleBannerInsertImage = ({ fileId, banner, }) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
     const fileUrl = yield getFileUrlFromTelegram(fileId);
-    const base64String = yield downloadFileAsBase64(fileUrl);
-    console.log('banner', banner, fileId);
+    const data = yield downloadFileAsUrl(fileUrl);
+    if (!((_a = data === null || data === void 0 ? void 0 : data.file) === null || _a === void 0 ? void 0 : _a.url))
+        return console.log('Error: No file url');
     if (banner === constants_1.keyboards.banner) {
         return yield prisma_1.default.banner.deleteMany().then(() => __awaiter(void 0, void 0, void 0, function* () {
+            var _d, _e;
             yield prisma_1.default.banner.create({
                 data: {
                     fileId,
-                    fileBase64: base64String,
+                    fileUrl: (_d = data === null || data === void 0 ? void 0 : data.file) === null || _d === void 0 ? void 0 : _d.url,
+                    fileName: (_e = data === null || data === void 0 ? void 0 : data.file) === null || _e === void 0 ? void 0 : _e.name,
                 },
             });
         }));
     }
     if (banner === constants_1.keyboards.travelBanner) {
         return yield prisma_1.default.travelBanner.deleteMany().then(() => __awaiter(void 0, void 0, void 0, function* () {
+            var _f, _g;
             yield prisma_1.default.travelBanner.create({
                 data: {
                     fileId,
-                    fileBase64: base64String,
+                    fileUrl: (_f = data === null || data === void 0 ? void 0 : data.file) === null || _f === void 0 ? void 0 : _f.url,
+                    fileName: (_g = data === null || data === void 0 ? void 0 : data.file) === null || _g === void 0 ? void 0 : _g.name,
                 },
             });
         }));
@@ -63,9 +75,33 @@ const handleBannerInsertImage = ({ fileId, banner, }) => __awaiter(void 0, void 
         return yield prisma_1.default.gallery.create({
             data: {
                 fileId,
-                fileBase64: base64String,
+                fileUrl: (_b = data === null || data === void 0 ? void 0 : data.file) === null || _b === void 0 ? void 0 : _b.url,
+                fileName: (_c = data === null || data === void 0 ? void 0 : data.file) === null || _c === void 0 ? void 0 : _c.name,
             },
         });
     }
 });
 exports.handleBannerInsertImage = handleBannerInsertImage;
+const uploadFile = (uri, uuid) => __awaiter(void 0, void 0, void 0, function* () {
+    const blob = yield fetch(uri).then((res) => res.blob());
+    const file = new File([blob], uuid + '.png', { type: 'image/png' });
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = yield axiosinstance_1.default.post('/file/upload', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+    return res.data;
+});
+// .then(async (blob) => {
+//   const file = new File([blob], 'image.png', { type: 'image/png' });
+//   const formData = new FormData();
+//   formData.append('file', file);
+//   const res = await axios.post('/file/upload', formData, {
+//     headers: {
+//       'Content-Type': 'multipart/form-data',
+//     },
+//   });
+//   console.log('res', res.data);
+// });

@@ -12,4 +12,20 @@ const keyboards = {
   contact: 'CONTACT',
 } as const;
 
-export { admins, keyboards };
+const commands = {
+  start: 'start',
+  deleteButton: 'Удалить',
+  deleteCall: 'удалить',
+  cancelButton: 'Отменить',
+  cancelCall: 'отменить',
+  banner: 'Баннер',
+  travel: 'Туры',
+  homeBanner: 'Главный баннер',
+  travelBanner: 'Туровый баннер',
+  gallery: 'Галерея',
+  car: 'Автомобили',
+  transfer: 'Трансферы',
+  contact: 'Контакты',
+} as const;
+
+export { admins, keyboards, commands };

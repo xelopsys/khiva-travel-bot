@@ -7,8 +7,8 @@ import { KeyboardButton } from 'grammy/types';
 
 bot.callbackQuery(commands.deleteCall, async (ctx: TypeBot) => {
   if (ctx.session.step === keyboards.travel) {
-    const travels = await prisma.travel.findMany();
-    const travelNames: KeyboardButton[] = travels.map((travel) => {
+    const travels = await prisma.travel?.findMany();
+    const travelNames: KeyboardButton[] = travels?.map((travel) => {
       return {
         text: travel.name,
       };

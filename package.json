@@ -11,7 +11,6 @@
 	"scripts": {
 		"postinstall": "prisma generate",
 		"dev": "nodemon ./dist/index.js",
-		"build": "tsc --project tsconfig.json",
 		"start": "node ./dist/index.js"
 	},
 	"dependencies": {

@@ -17,9 +17,10 @@ const menu_1 = require("../../utils/menu");
 const constants_1 = require("../../constants/constants");
 const prisma_1 = __importDefault(require("../../lib/prisma"));
 bot_1.default.callbackQuery(constants_1.commands.deleteCall, (ctx) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     if (ctx.session.step === constants_1.keyboards.travel) {
-        const travels = yield prisma_1.default.travel.findMany();
-        const travelNames = travels.map((travel) => {
+        const travels = yield ((_a = prisma_1.default.travel) === null || _a === void 0 ? void 0 : _a.findMany());
+        const travelNames = travels === null || travels === void 0 ? void 0 : travels.map((travel) => {
             return {
                 text: travel.name,
             };

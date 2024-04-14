@@ -16,6 +16,7 @@ const grammy_1 = require("grammy");
 const storage_free_1 = require("@grammyjs/storage-free");
 const i18n_1 = __importDefault(require("../i18n/i18n"));
 const constants_1 = require("../constants/constants");
+const express_1 = __importDefault(require("express"));
 const bot = new grammy_1.Bot(process.env.BOT_TOKEN);
 bot.use(i18n_1.default);
 bot.use((0, grammy_1.session)({
@@ -26,10 +27,23 @@ bot.use((0, grammy_1.session)({
     },
     storage: (0, storage_free_1.freeStorage)(bot.token),
 }));
-(() => __awaiter(void 0, void 0, void 0, function* () {
-    yield bot.catch((error) => {
-        console.log(error.message);
+if (process.env.NODE_ENV === 'production') {
+    // Use Webhooks for the production server
+    const app = (0, express_1.default)();
+    app.use(express_1.default.json());
+    app.use((0, grammy_1.webhookCallback)(bot, 'express'));
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log(`Bot listening on port ${PORT}`);
     });
-    yield bot.start();
-}))();
+}
+else {
+    // Use Long Polling for development
+    (() => __awaiter(void 0, void 0, void 0, function* () {
+        yield bot.catch((error) => {
+            console.log(error.message);
+        });
+        yield bot.start();
+    }))();
+}
 exports.default = bot;
